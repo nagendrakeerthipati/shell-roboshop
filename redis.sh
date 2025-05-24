@@ -30,20 +30,20 @@ VALIDATE() {
     fi
 }
 
-cp mongo.repo /etc/yum.repos.d/mongodb.repo
-VALIDATE $? "Copying MongoDB repo"
+dnf module disable redis -y
+dnf module enable redis:7 -y
+VALIDATE $? "redis enable " | tee -a $LOG_FILE
+dnf install redis -y | tee -a $LOG_FILE
 
-dnf install mongodb-org -y &>>$LOG_FILE
-VALIDATE $? "Installing mongodb server"
+# Update listen address from 127.0.0.1 to 0.0.0.0 in /etc/redis/redis.conf
+sed -i 's/127.0.0.1/0.0.0.0/' /etc/redis/redis.conf
+sed -i 's/yes/no/' etc/redis/redis.conf
+VALIDATE $? "updating conf " | tee -a $LOG_FILE
 
-systemctl enable mongod &>>$LOG_FILE
-VALIDATE $? "Enabling MongoDB"
+# Update protected-mode from yes to no in /etc/redis/redis.conf
 
-systemctl start mongod &>>$LOG_FILE
-VALIDATE $? "Starting MongoDB"
+Start &
+Enable Redis Service | tee -a $LOG_FILE
 
-sed -i 's/127.0.0.1/0.0.0.0/g' /etc/mongod.conf
-VALIDATE $? "Editing MongoDB conf file for remote connections"
-
-systemctl restart mongod &>>$LOG_FILE
-VALIDATE $? "Restarting MongoDB"
+systemctl enable redis
+systemctl start redis | tee -a $LOG_FILE
