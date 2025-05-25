@@ -7,7 +7,7 @@ LOGS_FOLDER="/var/log/roboshop-logs"
 SCRIPT_NAME=$(echo $0 | cut -d "." -f1)
 LOG_FILE="$LOGS_FOLDER/$SCRIPT_NAME.log"
 
-SCRIPT_DIR=$PWD
+SCRIPT_DIR=$PWD #this help us save
 
 mkdir -p $LOGS_FOLDER
 echo "Script started executing at: $(date)" | tee -a $LOG_FILE
@@ -65,7 +65,7 @@ cd /app
 npm install &>>$LOG_FILE
 VALIDATE $? "npm install "
 
-cp catalogue.repo /etc/systemd/system/catalogue.service
+cp $SCRIPT_DIR/catalogue.service /etc/systemd/system/catalogue.service
 VALIDATE $? "Copying from catalogue"
 
 sed -i '/s/<MONGODB-SERVER-IPADDRESS>/mongodb.nagendrablog.site/' catalogue.service &>>$LOG_FILE
@@ -84,5 +84,5 @@ cp $SCRIPT_DIR/mongo.repo /etc/yum.repos.d/mongo.repo
 dnf install mongodb-mongosh -y &>>$LOG_FILE
 VALIDATE $? "Installing MongoDB Client"
 
-mongosh --host monogodb.nagendrablog.site </app/db/master-data.js
+mongosh --host monogodb.nagendrablog.site </app/db/master-data.js &>>$LOG_FILE
 VALIDATE $? "Loading data into MongoDB"
