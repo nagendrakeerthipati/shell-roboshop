@@ -6,8 +6,8 @@ INSTANCES=("mongodb" "redis" "mysql" "rabbitmq" "catalogue" "user" "cart" "shipp
 ZONE_ID="Z079525032TH7EWN7IC2Z" # replace with your ZONE ID
 DOMAIN_NAME="nagendrablog.site" # replace with your domain
 
-for instance in ${INSTANCES[@]}; do
-    # for instance in $@; do
+# for instance in ${INSTANCES[@]}; do
+for instance in $@; do
     INSTANCE_ID=$(aws ec2 run-instances --image-id ami-09c813fb71547fc4f --instance-type t3.micro --security-group-ids sg-0e5d5ad00114fcbe6 --tag-specifications "ResourceType=instance,Tags=[{Key=Name, Value=$instance}]" --query "Instances[0].InstanceId" --output text)
     if [ $instance != "frontend" ]; then
         IP=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query "Reservations[0].Instances[0].PrivateIpAddress" --output text)
