@@ -30,11 +30,11 @@ VALIDATE() {
     fi
 }
 
-dnf module disable nodejs -y | tee -a $LOG_FILE
+dnf module disable nodejs -y &>>$LOG_FILE
 VALIDATE $? "disable nodejs "
 
 dnf module enable nodejs:20 -y
-VALIDATE $? "enable nodejs " /app E &>>$LOG_FILmkdir
+VALIDATE $? "enable nodejs " /app E &>>$LOG_FILE
 
 dnf install nodejs -y
 VALIDATE $? "installing nodejs " &>>$LOG_FILE
@@ -46,7 +46,7 @@ mkdir -p /app # -p refers if the directory already exists means it won't create 
 VALIDATE $?
 
 curl -o /tmp/catalogue.zip https://roboshop-artifacts.s3.amazonaws.com/catalogue-v3.zip &>>$LOG_FILE
-validate $? "catalogue downlaoding "
+VALIDATE $? "catalogue downlaoding "
 
 # rm -rf /app/*
 cd /app
@@ -57,7 +57,7 @@ cd /app
 npm install &>>$LOG_FILE
 VALIDATE $? "npm install "
 
-cp catalogue.repo etc/systemd/system/catalogue.service
+cp catalogue.repo /etc/systemd/system/catalogue.service
 VALIDATE $? "Copying from catalogue"
 
 sed -i '/s/<MONGODB-SERVER-IPADDRESS>/mongodb.nagendrablog.site/' catalogue.service &>>$LOG_FILE
