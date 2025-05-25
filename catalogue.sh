@@ -7,6 +7,8 @@ LOGS_FOLDER="/var/log/roboshop-logs"
 SCRIPT_NAME=$(echo $0 | cut -d "." -f1)
 LOG_FILE="$LOGS_FOLDER/$SCRIPT_NAME.log"
 
+SCRIPT_DIR=$PWD
+
 mkdir -p $LOGS_FOLDER
 echo "Script started executing at: $(date)" | tee -a $LOG_FILE
 
@@ -39,8 +41,14 @@ VALIDATE $? "enable nodejs " /app E &>>$LOG_FILE
 dnf install nodejs -y
 VALIDATE $? "installing nodejs " &>>$LOG_FILE
 
-useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop
-VALIDATE $? "user creaton " &>>$LOG_FILE
+id roboshop
+if [ $? -ne 0 ]; then
+    useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop
+    VALIDATE $? "user creaton " &>>$LOG_FILE
+else
+    echo -e "roboshop user already exists"
+
+fi
 
 mkdir -p /app # -p refers if the directory already exists means it won't create again
 VALIDATE $?
@@ -48,9 +56,9 @@ VALIDATE $?
 curl -o /tmp/catalogue.zip https://roboshop-artifacts.s3.amazonaws.com/catalogue-v3.zip &>>$LOG_FILE
 VALIDATE $? "catalogue downlaoding "
 
-# rm -rf /app/*
+rm -rf /app/*
 cd /app
-unzip /tmp/catalogue.zip &>>$LOG_FILE
+unzip -o /tmp/catalogue.zip &>>$LOG_FILE
 VALIDATE $? "unzip is catalogue.zip"
 
 cd /app
@@ -71,3 +79,10 @@ VALIDATE $? "enabling catalogue"
 
 systemctl start catalogue &>>$LOG_FILE
 VALIDATE $? "catalogue start "
+
+cp $SCRIPT_DIR/mongo.repo /etc/yum.repos.d/mongo.repo
+dnf install mongodb-mongosh -y &>>$LOG_FILE
+VALIDATE $? "Installing MongoDB Client"
+
+mongosh --host monogodb.nagendrablog.site </app/db/master-data.js
+VALIDATE $? "Loading data into MongoDB"
