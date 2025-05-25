@@ -68,7 +68,7 @@ VALIDATE $? "npm install "
 cp $SCRIPT_DIR/catalogue.service /etc/systemd/system/catalogue.service
 VALIDATE $? "Copying from catalogue"
 
-sed -i '/s/<MONGODB-SERVER-IPADDRESS>/mongodb.nagendrablog.site/' catalogue.service &>>$LOG_FILE
+sed -i 's/<MONGODB-SERVER-IPADDRESS>/mongodb.nagendrablog.site/' catalogue.service &>>$LOG_FILE
 VALIDATE $? "replaceing ip address with site name "
 
 systemctl daemon-reload &>>$LOG_FILE
