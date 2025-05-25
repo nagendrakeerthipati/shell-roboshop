@@ -30,20 +30,26 @@ VALIDATE() {
     fi
 }
 
-dnf module disable redis -y
-dnf module enable redis:7 -y
+dnf module disable redis -y | tee -a $LOG_FILE
+dnf module enable redis:7 -y | tee -a $LOG_FILE
 VALIDATE $? "redis enable " | tee -a $LOG_FILE
 dnf install redis -y | tee -a $LOG_FILE
 
 # Update listen address from 127.0.0.1 to 0.0.0.0 in /etc/redis/redis.conf
-sed -i 's/127.0.0.1/0.0.0.0/' /etc/redis/redis.conf
-sed -i 's/yes/no/' etc/redis/redis.conf
+sed -i -e 's/127.0.0.1/0.0.0.0/g' -e '/protected-mode/ c protected-mode no' /etc/redis/redis.conf
 VALIDATE $? "updating conf " | tee -a $LOG_FILE
 
 # Update protected-mode from yes to no in /etc/redis/redis.conf
 
-Start &
 Enable Redis Service | tee -a $LOG_FILE
 
-systemctl enable redis
+systemctl enable redis &>>$LOG_FILE
+VALIDATE $? "Enable Redis"
+
 systemctl start redis | tee -a $LOG_FILE
+VALIDATE $? "Started Redis"
+
+END_TIME=$(date +%s)
+TOTAL_TIME=$(($END_TIME - $START_TIME))
+
+echo -e "Script exection completed successfully, $Y time taken: $TOTAL_TIME seconds $N" | tee -a $LOG_FILE
