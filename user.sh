@@ -54,7 +54,7 @@ unzip -o /tmp/user.zip &>>$LOG_FILE
 VALIDATE $? "unzipping user "
 
 cd /app
-npm install
+npm install &>>$LOG_FILE
 VALIDATE $? "dependencies downloading "
 
 systemctl daemon-reload &>>$LOG_FILE
