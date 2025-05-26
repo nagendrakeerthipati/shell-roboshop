@@ -74,10 +74,10 @@ cp $SCRIPT_DIR/mongo.repo /etc/yum.repos.d/mongo.repo
 dnf install mongodb-mongosh -y &>>$LOG_FILE
 VALIDATE $? "Installing MongoDB Client"
 
-STATUS=$(mongosh --host mongodb.nagendrablog.site --eval 'db.getMongo().getDBNames().indexOf("catalogue")')
-if [ $STATUS -lt 0 ]; then
+STATUS=$(mongosh --quiet --host mongodb.nagendrablog.site --eval 'db = db.getSiblingDB("catalogue"); db.products.countDocuments()')
+if [ "$STATUS" -eq 0 ]; then
     mongosh --host mongodb.nagendrablog.site </app/db/master-data.js &>>$LOG_FILE
     VALIDATE $? "Loading data into MongoDB"
 else
-    echo -e "Data is already loaded ... $Y SKIPPING $N"
+    echo -e "Catalogue data already loaded ... $Y SKIPPING $N"
 fi
