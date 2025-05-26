@@ -28,14 +28,14 @@ VALIDATE() {
     fi
 }
 
-dnf module disable redis -y | tee -a $LOG_FILE
-dnf module enable redis:7 -y | tee -a $LOG_FILE
-VALIDATE $? "redis enable " | tee -a $LOG_FILE
-dnf install redis -y | tee -a $LOG_FILE
+dnf module disable redis -y &>>$LOG_FILE
+dnf module enable redis:7 -y &>>$LOG_FILE
+VALIDATE $? "redis enable " &>>$LOG_FILE
+dnf install redis -y &>>$LOG_FILE
 
 # Update listen address from 127.0.0.1 to 0.0.0.0 in /etc/redis/redis.conf
 sed -i -e 's/127.0.0.1/0.0.0.0/g' -e '/protected-mode/ c protected-mode no' /etc/redis/redis.conf
-VALIDATE $? "updating conf " | tee -a $LOG_FILE
+VALIDATE $? "updating conf " &>>$LOG_FILE
 
 # Update protected-mode from yes to no in /etc/redis/redis.conf
 
@@ -44,7 +44,7 @@ Enable Redis Service | tee -a $LOG_FILE
 systemctl enable redis &>>$LOG_FILE
 VALIDATE $? "Enable Redis"
 
-systemctl start redis | tee -a $LOG_FILE
+systemctl start redis &>>$LOG_FILE
 VALIDATE $? "Started Redis"
 
 END_TIME=$(date +%s)
