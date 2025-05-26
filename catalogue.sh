@@ -1,4 +1,5 @@
-START_TIME=$(date +%s)
+#!/bin/bash
+
 USERID=$(id -u)
 R="\e[31m"
 G="\e[32m"
@@ -7,12 +8,12 @@ N="\e[0m"
 LOGS_FOLDER="/var/log/roboshop-logs"
 SCRIPT_NAME=$(echo $0 | cut -d "." -f1)
 LOG_FILE="$LOGS_FOLDER/$SCRIPT_NAME.log"
-
-SCRIPT_DIR=$PWD #this help us save
+SCRIPT_DIR=$PWD
 
 mkdir -p $LOGS_FOLDER
 echo "Script started executing at: $(date)" | tee -a $LOG_FILE
 
+# check the user has root priveleges or not
 if [ $USERID -ne 0 ]; then
     echo -e "$R ERROR:: Please run this script with root access $N" | tee -a $LOG_FILE
     exit 1 #give other than 0 upto 127
@@ -23,77 +24,60 @@ fi
 # validate functions takes input as exit status, what command they tried to install
 VALIDATE() {
     if [ $1 -eq 0 ]; then
-        echo -e " $2 is ... $G SUCCESS $N" | tee -a $LOG_FILE
+        echo -e "$2 is ... $G SUCCESS $N" | tee -a $LOG_FILE
     else
-        echo -e " $2 is ... $R FAILURE $N" | tee -a $LOG_FILE
+        echo -e "$2 is ... $R FAILURE $N" | tee -a $LOG_FILE
         exit 1
     fi
 }
 
 dnf module disable nodejs -y &>>$LOG_FILE
-VALIDATE $? "disable nodejs "
+VALIDATE $? "Disabling default nodejs"
 
 dnf module enable nodejs:20 -y &>>$LOG_FILE
-VALIDATE $? "enable nodejs "
+VALIDATE $? "Enabling nodejs:20"
 
 dnf install nodejs -y &>>$LOG_FILE
-VALIDATE $? "installing nodejs "
+VALIDATE $? "Installing nodejs:20"
 
 id roboshop
 if [ $? -ne 0 ]; then
-    useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop
-    VALIDATE $? "user creaton " &>>$LOG_FILE
+    useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>>$LOG_FILE
+    VALIDATE $? "Creating roboshop system user"
 else
-    echo -e "roboshop user already exists"
-
+    echo -e "System user roboshop already created ... $Y SKIPPING $N"
 fi
 
-mkdir -p /app # -p refers if the directory already exists means it won't create again
-VALIDATE $?
+mkdir -p /app
+VALIDATE $? "Creating app directory"
 
 curl -o /tmp/catalogue.zip https://roboshop-artifacts.s3.amazonaws.com/catalogue-v3.zip &>>$LOG_FILE
-VALIDATE $? "catalogue downlaoding "
+VALIDATE $? "Downloading Catalogue"
 
 rm -rf /app/*
 cd /app
-unzip -o /tmp/catalogue.zip &>>$LOG_FILE
-VALIDATE $? "unzip is catalogue.zip"
+unzip /tmp/catalogue.zip &>>$LOG_FILE
+VALIDATE $? "unzipping catalogue"
 
-cd /app
 npm install &>>$LOG_FILE
-VALIDATE $? "npm install "
+VALIDATE $? "Installing Dependencies"
 
 cp $SCRIPT_DIR/catalogue.service /etc/systemd/system/catalogue.service
-VALIDATE $? "Copying from catalogue"
-
-# sed -i 's/<MONGODB-SERVER-IPADDRESS>/mongodb.nagendrablog.site/' catalogue.service &>>$LOG_FILE
-# VALIDATE $? "replaceing ip address with site name "
+VALIDATE $? "Copying catalogue service"
 
 systemctl daemon-reload &>>$LOG_FILE
-VALIDATE $? "daemon reload "
-
 systemctl enable catalogue &>>$LOG_FILE
-VALIDATE $? "enabling catalogue"
-
-systemctl start catalogue &>>$LOG_FILE
-VALIDATE $? "catalogue start "
+systemctl start catalogue
+VALIDATE $? "Starting Catalogue"
 
 cp $SCRIPT_DIR/mongo.repo /etc/yum.repos.d/mongo.repo
 dnf install mongodb-mongosh -y &>>$LOG_FILE
 VALIDATE $? "Installing MongoDB Client"
 
-# mongosh --host mongodb.nagendrablog.site </app/db/master-data.js &>>$LOG_FILE
-# VALIDATE $? "Loading data into MongoDB"
-
 STATUS=$(mongosh --host mongodb.daws84s.site --eval 'db.getMongo().getDBNames().indexOf("catalogue")')
 if [ $STATUS -lt 0 ]; then
-    mongosh --host mongodb.nagendrablog.site </app/db/master-data.js &>>$LOG_FILE
+    mongosh --host mongodb.daws84s.site </app/db/master-data.js &>>$LOG_FILE
     VALIDATE $? "Loading data into MongoDB"
 else
     echo -e "Data is already loaded ... $Y SKIPPING $N"
 fi
-
-END_TIME=$(date +%s)
-TOTAL_TIME=$(($END_TIME - $START_TIME))
-
-echo -e "Script exection completed successfully, $Y time taken: $TOTAL_TIME seconds $N" | tee -a $LOG_FILE
