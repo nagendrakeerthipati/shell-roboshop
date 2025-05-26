@@ -8,8 +8,6 @@ LOGS_FOLDER="/var/log/roboshop-logs"
 SCRIPT_NAME=$(echo $0 | cut -d "." -f1)
 LOG_FILE="$LOGS_FOLDER/$SCRIPT_NAME.log"
 
-SCRIPT_DIR=$PWD #this help us save
-
 mkdir -p $LOGS_FOLDER
 echo "Script started executing at: $(date)" | tee -a $LOG_FILE
 
@@ -30,34 +28,42 @@ VALIDATE() {
     fi
 }
 
-# -------------------------------frontend script starts -----------------------------------
+dnf module disable nodejs -y &>>LOG_FILE
+dnf module enable nodejs:20 -y &>>$LOG_FILE
 
-dnf module list nginx &>>$LOG_FILE
+dnf install nodejs -y &>>$LOG_FILE
+VALIDATE $? "installing nodejs "
 
-# Install Nginx
-dnf module disable nginx -y &>>$LOG_FILE
-dnf module enable nginx:1.24 -y &>>$LOG_FILE
-dnf install nginx -y &>>$LOG_FILE
-VALIDATE $? "installing nginx:1.24 "
+id roboshop
+if [ $? -ne 0 ]; then
+    useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop
+    VALIDATE $? "Roboshop user created "
+else
+    echo -e "user already exists......$Y No need to create $N"
+fi
 
-# Start & Enable Nginx service
-systemctl enable nginx
-systemctl start nginx
-VALIDATE $? "service started "
+mkdir /app
+VALIDATE $? "creating directory "
 
-# Remove the default content that web server is serving
-rm -rf /usr/share/nginx/html/*
-VALIDATE $? "removing data from html" &>>$LOG_FILE
+curl -L -o /tmp/cart.zip https://roboshop-artifacts.s3.amazonaws.com/cart-v3.zip &>>$LOG_FILE
+VALIDATE $? "downloading cart "
 
-# Download the frontend content
-curl -o /tmp/frontend.zip https://roboshop-artifacts.s3.amazonaws.com/frontend-v3.zip &>>$LOG_FILE
-VALIDATE $? "Downloading "
+rm -rf /app/*
+cd /app
+unzip -o /tmp/cart.zip &>>$LOG_FILE
+VALIDATE $? "unzipping cart "
 
-cd /usr/share/nginx/html
-unzip /tmp/frontend.zip &>>$LOG_FILE
-VALIDATE $? "unzip "
+cd /app
+npm install
+VALIDATE $? "dependencies downloading "
 
-systemctl restart nginx &>>$LOG_FILE
-VALIDATE $? "restart nginx "
+systemctl daemon-reload &>>$LOG_FILE
+VALIDATE $? "daemon reload "
+
+systemctl enable cart &>>$LOG_FILE
+VALIDATE $? "enabling cart"
+
+systemctl start cart &>>$LOG_FILE
+VALIDATE $? "cart start "
 
 echo -e "Script exection completed successfully, $Y time taken: $TOTAL_TIME seconds $N" | tee -a $LOG_FILE

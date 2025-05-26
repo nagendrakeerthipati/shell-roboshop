@@ -1,3 +1,4 @@
+START_TIME=$(date +%s)
 USERID=$(id -u)
 R="\e[31m"
 G="\e[32m"
@@ -91,3 +92,5 @@ if [ $STATUS -lt 0 ]; then
 else
     echo -e "Data is already loaded ... $Y SKIPPING $N"
 fi
+
+echo -e "Script exection completed successfully, $Y time taken: $TOTAL_TIME seconds $N" | tee -a $LOG_FILE
