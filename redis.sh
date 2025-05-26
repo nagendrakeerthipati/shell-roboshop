@@ -39,8 +39,6 @@ VALIDATE $? "updating conf " &>>$LOG_FILE
 
 # Update protected-mode from yes to no in /etc/redis/redis.conf
 
-Enable Redis Service | tee -a $LOG_FILE
-
 systemctl enable redis &>>$LOG_FILE
 VALIDATE $? "Enable Redis"
 
