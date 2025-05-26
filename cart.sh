@@ -42,7 +42,7 @@ else
     echo -e "user already exists......$Y No need to create $N"
 fi
 
-mkdir /app
+mkdir -p /app
 VALIDATE $? "creating directory "
 
 curl -L -o /tmp/cart.zip https://roboshop-artifacts.s3.amazonaws.com/cart-v3.zip &>>$LOG_FILE
@@ -54,7 +54,7 @@ unzip -o /tmp/cart.zip &>>$LOG_FILE
 VALIDATE $? "unzipping cart "
 
 cd /app
-npm install
+npm install &>>$LOG_FILE
 VALIDATE $? "dependencies downloading "
 
 systemctl daemon-reload &>>$LOG_FILE
