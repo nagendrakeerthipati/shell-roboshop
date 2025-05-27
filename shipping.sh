@@ -28,7 +28,7 @@ VALIDATE() {
         exit 1
     fi
 }
-dnf install maven -y
+dnf install maven -y &>>LOG_FILE
 VALIDATE $? "installing maveen "
 
 id roboshop
@@ -39,34 +39,34 @@ else
     echo -e "user already exists"
 fi
 
-mkdir -p /app
+mkdir -p /app &>>LOG_FILE
 
-curl -L -o /tmp/shipping.zip https://roboshop-artifacts.s3.amazonaws.com/shipping-v3.zip
+curl -L -o /tmp/shipping.zip https://roboshop-artifacts.s3.amazonaws.com/shipping-v3.zip &>>LOG_FILE
 VALIDATE $? "downloading shipping "
 
 rm -rf /app/*
 cd /app
-unzip -o /tmp/shipping.zip
+unzip -o /tmp/shipping.zip &>>LOG_FILE
 VALIDATE $? "unziping "
 
 cd /app
-mvn clean package
-mv target/shipping-1.0.jar shipping.jar
+mvn clean package &>>LOG_FILE
+mv target/shipping-1.0.jar shipping.jar &>>LOG_FILE
 VALIDATE $? "moving shipping.jar "
 
-cp SCRIPT_DIR/shipping.service /etc/systemd/system/shipping.service
+cp SCRIPT_DIR/shipping.service /etc/systemd/system/shipping.service &>>LOG_FILE
 VALIDATE $? "setup a new service in systemd so systemctl "
 
-systemctl daemon-reload
+systemctl daemon-reload &>>LOG_FILE
 VALIDATE $? "daemon reloading"
 
-systemctl enable shipping
+systemctl enable shipping &>>LOG_FILE
 VALIDATE $? "enable is "
 
-systemctl start shipping
+systemctl start shipping &>>LOG_FILE
 VALIDATE $? "starting systemctl "
 
-dnf install mysql -y
+dnf install mysql -y &>>LOG_FILE
 VALIDATE $? "installing mysql "
 
 record_count=$(mysql -h mysql.nagendrablog.site -uroot -pRoboShop@1 -N -e "SELECT COUNT(*) FROM your_table_name WHERE your_condition;" your_database)
@@ -78,3 +78,8 @@ if [ "$record_count" -eq 0 ]; then
 else
     echo "Data already exists. Skipping import."
 fi
+
+END_TIME=$(date +%s)
+TOTAL_TIME=$(($END_TIME - $START_TIME))
+
+echo -e "Script exection completed successfully, $Y time taken: $TOTAL_TIME seconds $N" | tee -a $LOG_FILE
