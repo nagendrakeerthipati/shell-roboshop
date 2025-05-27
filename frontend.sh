@@ -49,6 +49,9 @@ VALIDATE $? "service started "
 rm -rf /usr/share/nginx/html/*
 VALIDATE $? "removing data from html" &>>$LOG_FILE
 
+cp $SCRIPT_DIR/nginx.conf /etc/nginx/nginx.conf
+VALIDATE $? "Copying nginx.conf"
+
 # Download the frontend content
 curl -o /tmp/frontend.zip https://roboshop-artifacts.s3.amazonaws.com/frontend-v3.zip &>>$LOG_FILE
 VALIDATE $? "Downloading "
