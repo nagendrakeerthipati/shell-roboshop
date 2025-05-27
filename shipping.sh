@@ -69,14 +69,17 @@ VALIDATE $? "starting systemctl "
 dnf install mysql -y &>>LOG_FILE
 VALIDATE $? "installing mysql "
 
-record_count=$(mysql -h mysql.nagendrablog.site -uroot -pRoboShop@1 -N -e "SELECT COUNT(*) FROM your_table_name WHERE your_condition;" your_database)
+DB=roboshop
 
-if [ "$record_count" -eq 0 ]; then
-    echo "Data not found. Importing..."
-    mysql -h mysql.nagendrablog.site -uroot -pRoboShop@1 </app/db/app-user.sql
-    VALIDATE $? "Importing data ..."
+echo "Checking if shipping data already exists..."
+
+count=$(mysql -h mysql.nagendrablog.site -uroot -pRoboShop@1 -D $DB -N -e "SELECT COUNT(*) FROM shipping;" 2>/dev/null)
+
+if [[ "$count" =~ ^[0-9]+$ ]] && [ "$count" -eq 0 ]; then
+    echo "No data found. Importing..."
+    mysql -h mysql.nagendrablog.site -uroot -pRoboShop@1 </app/db/master-data.sql
 else
-    echo "Data already exists. Skipping import."
+    echo "Data already exists or query failed. Skipping import."
 fi
 
 END_TIME=$(date +%s)
