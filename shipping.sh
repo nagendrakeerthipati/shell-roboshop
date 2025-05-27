@@ -54,7 +54,7 @@ mvn clean package &>>LOG_FILE
 mv target/shipping-1.0.jar shipping.jar &>>LOG_FILE
 VALIDATE $? "moving shipping.jar "
 
-cp SCRIPT_DIR/shipping.service /etc/systemd/system/shipping.service &>>LOG_FILE
+cp $SCRIPT_DIR/shipping.service /etc/systemd/system/shipping.service
 VALIDATE $? "setup a new service in systemd so systemctl "
 
 systemctl daemon-reload &>>LOG_FILE
