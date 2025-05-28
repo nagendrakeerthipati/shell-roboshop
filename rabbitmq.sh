@@ -32,12 +32,11 @@ VALIDATE() {
     fi
 }
 
-
 cp $SCRIPT_DIR/rabbitmq.repo /etc/yum.repos.d/rabbitmq.repo &>>LOG_FILE
 VALIDATE $? "Copying is "
 
-systemctl daemon-reload &>>LOG_FILE
-VALIDATE $? "daemon reloading"
+systemctl dnf install rabbitmq-server -y &>>LOG_FILE
+VALIDATE $? "installing "
 
 systemctl enable rabbitmq-server &>>LOG_FILE
 VALIDATE $? "enable is "
@@ -45,12 +44,8 @@ VALIDATE $? "enable is "
 systemctl start rabbitmq-server &>>LOG_FILE
 VALIDATE $? "starting systemctl "
 
-
-
 rabbitmqctl add_user roboshop $RABBITMQ_PASSWD &>>$LOG_FILE
 rabbitmqctl set_permissions -p / roboshop ".*" ".*" ".*" &>>$LOG_FILE
-
-
 
 END_TIME=$(date +%s)
 TOTAL_TIME=$(($END_TIME - $START_TIME))
