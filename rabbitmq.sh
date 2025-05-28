@@ -35,7 +35,7 @@ VALIDATE() {
 cp $SCRIPT_DIR/rabbitmq.repo /etc/yum.repos.d/rabbitmq.repo &>>LOG_FILE
 VALIDATE $? "Copying is "
 
-systemctl dnf install rabbitmq-server -y &>>LOG_FILE
+dnf install rabbitmq-server -y &>>LOG_FILE
 VALIDATE $? "installing "
 
 systemctl enable rabbitmq-server &>>LOG_FILE
