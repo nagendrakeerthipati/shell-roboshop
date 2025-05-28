@@ -72,15 +72,15 @@ VALIDATE $? "starting systemctl "
 dnf install mysql -y &>>LOG_FILE
 VALIDATE $? "installing mysql "
 
-mysql -h mysql.nagendrablog.site -u root -p$MYSQL_ROOT_PASSWORD -e 'use cities' &>>$LOG_FILE
-if [ $? -ne 0 ]; then
-    mysql -h mysql.nagendrablog.site -uroot -p$MYSQL_ROOT_PASSWORD </app/db/schema.sql &>>$LOG_FILE
-    mysql -h mysql.nagendrablog.site -uroot -p$MYSQL_ROOT_PASSWORD </app/db/app-user.sql &>>$LOG_FILE
-    mysql -h mysql.nagendrablog.site -uroot -p$MYSQL_ROOT_PASSWORD </app/db/master-data.sql &>>$LOG_FILE
-    VALIDATE $? "Loading data into MySQL"
-else
-    echo -e "Data is already loaded into MySQL ... $Y SKIPPING $N"
-fi
+# mysql -h mysql.nagendrablog.site -u root -p$MYSQL_ROOT_PASSWORD -e 'use cities' &>>$LOG_FILE
+# if [ $? -ne 0 ]; then
+mysql -h mysql.nagendrablog.site -uroot -p$MYSQL_ROOT_PASSWORD </app/db/schema.sql &>>$LOG_FILE
+mysql -h mysql.nagendrablog.site -uroot -p$MYSQL_ROOT_PASSWORD </app/db/app-user.sql &>>$LOG_FILE
+mysql -h mysql.nagendrablog.site -uroot -p$MYSQL_ROOT_PASSWORD </app/db/master-data.sql &>>$LOG_FILE
+VALIDATE $? "Loading data into MySQL"
+# else
+#     echo -e "Data is already loaded into MySQL ... $Y SKIPPING $N"
+# fi
 
 END_TIME=$(date +%s)
 TOTAL_TIME=$(($END_TIME - $START_TIME))
