@@ -31,8 +31,9 @@ VALIDATE() {
         exit 1
     fi
 }
-dnf install maven -y &>>LOG_FILE
-VALIDATE $? "installing maveen "
+
+dnf install golang -y &>>LOG_FILE
+VALIDATE $? "installing golang  "
 
 id roboshop
 if [ $? -ne 0 ]; then
@@ -44,43 +45,31 @@ fi
 
 mkdir -p /app &>>LOG_FILE
 
-curl -L -o /tmp/shipping.zip https://roboshop-artifacts.s3.amazonaws.com/shipping-v3.zip &>>LOG_FILE
-VALIDATE $? "downloading shipping "
+curl -L -o /tmp/dispatch.zip https://roboshop-artifacts.s3.amazonaws.com/dispatch-v3.zip &>>LOG_FILE
+VALIDATE $? "downloading dispatch "
 
 rm -rf /app/*
 cd /app
-unzip -o /tmp/shipping.zip &>>LOG_FILE
+unzip -o /tmp/dispatch.zip &>>LOG_FILE
 VALIDATE $? "unziping "
 
 cd /app
-mvn clean package &>>LOG_FILE
-mv target/shipping-1.0.jar shipping.jar &>>LOG_FILE
-VALIDATE $? "moving shipping.jar "
+go mod init dispatch &>>LOG_FILE
+VALIDATE $? "dispatch "
+go get &>>LOG_FILE
+go build &>>LOG_FILE
 
-cp $SCRIPT_DIR/shipping.service /etc/systemd/system/shipping.service
-VALIDATE $? "setup a new service in systemd so systemctl "
+cp $SCRIPT_DIR/dispatch.service /etc/systemd/system/dispatch.service &>>LOG_FILE
+VALIDATE $? "Copying dispatch.service"
 
 systemctl daemon-reload &>>LOG_FILE
 VALIDATE $? "daemon reloading"
 
-systemctl enable shipping &>>LOG_FILE
+systemctl enable dispatch &>>LOG_FILE
 VALIDATE $? "enable is "
 
-systemctl start shipping &>>LOG_FILE
+systemctl start dispatch &>>LOG_FILE
 VALIDATE $? "starting systemctl "
-
-dnf install mysql -y &>>LOG_FILE
-VALIDATE $? "installing mysql "
-
-mysql -h mysql.nagendrablog.site -u root -p$MYSQL_ROOT_PASSWORD -e 'use cities' &>>$LOG_FILE
-if [ $? -ne 0 ]; then
-    mysql -h mysql.nagendrablog.site -uroot -p$MYSQL_ROOT_PASSWORD </app/db/schema.sql &>>$LOG_FILE
-    mysql -h mysql.nagendrablog.site -uroot -p$MYSQL_ROOT_PASSWORD </app/db/app-user.sql &>>$LOG_FILE
-    mysql -h mysql.nagendrablog.site -uroot -p$MYSQL_ROOT_PASSWORD </app/db/master-data.sql &>>$LOG_FILE
-    VALIDATE $? "Loading data into MySQL"
-else
-    echo -e "Data is already loaded into MySQL ... $Y SKIPPING $N"
-fi
 
 END_TIME=$(date +%s)
 TOTAL_TIME=$(($END_TIME - $START_TIME))
