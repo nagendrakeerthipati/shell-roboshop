@@ -1,9 +1,9 @@
 #!/bin/bash
 
 AMI_ID="ami-09c813fb71547fc4f"
-SG_ID="sg-0e5d5ad00114fcbe6" # replace with your SG ID
+SG_ID="sg-0adb06d6105eb0708" # replace with your SG ID 
 INSTANCES=("mongodb" "redis" "mysql" "rabbitmq" "catalogue" "user" "cart" "shipping" "payment" "dispatch" "frontend")
-ZONE_ID="Z079525032TH7EWN7IC2Z" # replace with your ZONE ID
+ZONE_ID="Z01641921Z3ITYGQXCIRQ" # replace with your ZONE ID
 DOMAIN_NAME="nagendrablog.site" # replace with your domain
 
 # for instance in ${INSTANCES[@]}; do
